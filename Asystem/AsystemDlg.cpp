@@ -56,7 +56,6 @@ CAsystemDlg::CAsystemDlg(CWnd* pParent /*=nullptr*/)
 	, m_Phone(_T(""))
 	, m_Mailbox(_T(""))
 	, m_Home(_T(""))
-	, m_Show(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -71,7 +70,6 @@ void CAsystemDlg::DoDataExchange(CDataExchange* pDX)//框内数据交换
 	DDX_Text(pDX, IDC_Ephone, m_Phone);
 	DDX_Text(pDX, IDC_Emailbox, m_Mailbox);
 	DDX_Text(pDX, IDC_Ehome, m_Home);
-	DDX_Text(pDX, IDC_Eshow, m_Show);
 	DDX_Control(pDX, IDC_LAll, m_List);
 }
 
@@ -88,7 +86,6 @@ BEGIN_MESSAGE_MAP(CAsystemDlg, CDialogEx)//按钮点击映射
 	ON_BN_CLICKED(IDCANCEL, &CAsystemDlg::OnBnClickedCancel)
 	ON_EN_CHANGE(IDC_Enumber, &CAsystemDlg::OnEnChangeEnumber)
 	ON_LBN_SELCHANGE(IDC_LAll, &CAsystemDlg::OnLbnSelchangeLall)
-	ON_EN_CHANGE(IDC_Eshow, &CAsystemDlg::OnEnChangeEshow)
 END_MESSAGE_MAP()
 
 
@@ -116,7 +113,7 @@ Msg*index;//设置递增指针用于添加
 BOOL CAsystemDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-
+	m_List.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 1, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 	// 将“关于...”菜单项添加到系统菜单中。
 
 	// IDM_ABOUTBOX 必须在系统命令范围内。
@@ -479,12 +476,4 @@ void CAsystemDlg::OnLbnSelchangeLall()
 }
 
 
-void CAsystemDlg::OnEnChangeEshow()
-{
-	// TODO:  如果该控件是 RICHEDIT 控件，它将不
-	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
-	// 函数并调用 CRichEditCtrl().SetEventMask()，
-	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
 
-	// TODO:  在此添加控件通知处理程序代码
-}
