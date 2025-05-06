@@ -53,8 +53,6 @@ CAsystemDlg::CAsystemDlg(CWnd* pParent /*=nullptr*/)
 	, m_Number(_T(""))
 	, m_Sex(_T(""))
 	, m_Phone(_T(""))
-	, m_Mailbox(_T(""))
-	, m_Home(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -67,8 +65,6 @@ void CAsystemDlg::DoDataExchange(CDataExchange* pDX)//框内数据交换
 	DDX_Text(pDX, IDC_Enumber, m_Number);
 	DDX_Text(pDX, IDC_Esex, m_Sex);
 	DDX_Text(pDX, IDC_Ephone, m_Phone);
-	DDX_Text(pDX, IDC_Emailbox, m_Mailbox);
-	DDX_Text(pDX, IDC_Ehome, m_Home);
 	DDX_Control(pDX, IDC_LIST2, m_List);
 }
 
@@ -97,14 +93,12 @@ struct Msg {
 	CString Number;
 	CString Sex;
 	CString Phone;
-	CString Mailbox;
-	CString Home;
 	Msg*next;
 }*msg = new Msg;
 
 void change(int*i) {
-	if (*i == 7)*i = 1;
-	else if (*i < 7)*i = *i + 1;
+	if (*i == 5)*i = 1;
+	else if (*i < 5)*i = *i + 1;
 }
 
 CString All;//用于保存个人信息的字符串
@@ -197,8 +191,6 @@ BOOL CAsystemDlg::OnInitDialog()
 	m_List.InsertColumn(2, _T("Number"), LVCFMT_LEFT, 80);
 	m_List.InsertColumn(3, _T("Sex"), LVCFMT_LEFT, 60);
 	m_List.InsertColumn(4, _T("Phone"), LVCFMT_LEFT, 120);
-	m_List.InsertColumn(5, _T("Mailbox"), LVCFMT_LEFT, 150);
-	m_List.InsertColumn(6, _T("Home"), LVCFMT_LEFT, 200);
 	m_List.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 
 	// 打开CSV文件
@@ -240,8 +232,6 @@ BOOL CAsystemDlg::OnInitDialog()
 			case 3: index->Number = citem; break;
 			case 4: index->Sex = citem; break;
 			case 5: index->Phone = citem; break;
-			case 6: index->Mailbox = citem; break;
-			case 7: index->Home = citem; break;
 			}
 
 			// 填充表格数据（列索引是i-1）
@@ -325,9 +315,7 @@ void CAsystemDlg::OnBnClickedAddB()//添加功能***
 		index->Number = m_Number;
 		index->Sex = m_Sex;
 		index->Phone = m_Phone;
-		index->Mailbox = m_Mailbox;
-		index->Home = m_Home;
-		CString All = m_Class + _T(",") + m_Name + _T(",") + m_Number + _T(",") + m_Sex + _T(",") + m_Phone + _T(",") + m_Mailbox + _T(",") + m_Home;
+		CString All = m_Class + _T(",") + m_Name + _T(",") + m_Number + _T(",") + m_Sex + _T(",") + m_Phone + _T(",");
 
 		// 在 CListCtrl 中添加新行
 		int nItem = m_List.InsertItem(m_List.GetItemCount(), m_Class);
@@ -336,8 +324,6 @@ void CAsystemDlg::OnBnClickedAddB()//添加功能***
 		m_List.SetItemText(nItem, 2, m_Number);
 		m_List.SetItemText(nItem, 3, m_Sex);
 		m_List.SetItemText(nItem, 4, m_Phone);
-		m_List.SetItemText(nItem, 5, m_Mailbox);
-		m_List.SetItemText(nItem, 6, m_Home);
 		UpdateData(FALSE);//显示数据
 		MessageBox(_T("添加成功"));
 	}
@@ -357,11 +343,10 @@ void CAsystemDlg::OnBnClickedSearchB()//查找功能***
 		{
 			search = search->next;
 		}
-
 		if (search != NULL && (m_Name == L"" || m_Name == search->Name)) // 如果找到匹配的学号，并且姓名匹配（或未输入姓名）
 		{
 			// 构造要显示的字符串
-			CString All = search->Class + _T(",") + search->Name + _T(",") + search->Number + _T(",") + search->Sex + _T(",") + search->Phone + _T(",") + search->Mailbox + _T(",") + search->Home;
+			CString All = search->Class + _T(",") + search->Name + _T(",") + search->Number + _T(",") + search->Sex + _T(",") + search->Phone + _T(",");
 
 			// 清空 CListCtrl
 			m_List.DeleteAllItems();
@@ -372,8 +357,6 @@ void CAsystemDlg::OnBnClickedSearchB()//查找功能***
 			m_List.SetItemText(nItem, 2, search->Number);
 			m_List.SetItemText(nItem, 3, search->Sex);
 			m_List.SetItemText(nItem, 4, search->Phone);
-			m_List.SetItemText(nItem, 5, search->Mailbox);
-			m_List.SetItemText(nItem, 6, search->Home);
 
 			// 更新成员变量
 			m_Class = search->Class;
@@ -381,8 +364,6 @@ void CAsystemDlg::OnBnClickedSearchB()//查找功能***
 			m_Number = search->Number;
 			m_Sex = search->Sex;
 			m_Phone = search->Phone;
-			m_Mailbox = search->Mailbox;
-			m_Home = search->Home;
 
 			MessageBox(_T("查找成功"));
 		}
@@ -398,27 +379,27 @@ void CAsystemDlg::OnBnClickedSearchB()//查找功能***
 void CAsystemDlg::OnBnClickedModifyB()//修改功能***
 {
 	// TODO: 在此添加控件通知处理程序代码
-	//UpdateData(TRUE);
-	//Msg*search = msg->next;
-	//if (search != NULL&&m_Number!=""&&m_Name!="")//修改必须输入学号姓名
-	//{
-	//	while (m_Number!=search->Number&&search->next != NULL) { search = search->next; }
-	//	if ( m_Number == search->Number) {
-	//		All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;
-	//		int column=m_List.FindString(-1, All);
-	//		search->Class = m_Class;
-	//		search->Name = m_Name;
-	//		search->Number=m_Number;
-	//		search->Sex=m_Sex;
-	//		search->Phone=m_Phone;
-	//		search->Mailbox=m_Mailbox;
-	//		search->Home=m_Home;
-	//		m_List.DeleteString(column);
-	//		All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;
-	//		m_List.AddString(All);
-	//		MessageBox(L"修改成功");
-	//	}
-	//}
+	UpdateData(TRUE);
+	Msg*search = msg->next;
+	if (search != NULL&&m_Number!=""&&m_Name!="")//修改必须输入学号姓名
+	{
+		while (m_Number!=search->Number&&search->next != NULL) { search = search->next; }
+		if ( m_Number == search->Number) {
+			All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;
+			int column=m_List.FindString(-1, All);
+			search->Class = m_Class;
+			search->Name = m_Name;
+			search->Number=m_Number;
+			search->Sex=m_Sex;
+			search->Phone=m_Phone;
+			search->Mailbox=m_Mailbox;
+			search->Home=m_Home;
+			m_List.DeleteString(column);
+			All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;
+			m_List.AddString(All);
+			MessageBox(L"修改成功");
+		}
+	}
 }
 
 
@@ -493,8 +474,6 @@ void CAsystemDlg::OnBnClickedBclearin()
 	m_Number = L"";
 	m_Sex = L"";
 	m_Phone = L"";
-	m_Mailbox = L"";
-	m_Home = "";
 	UpdateData(FALSE);
 }
 
@@ -509,7 +488,7 @@ void CAsystemDlg::OnBnClickedCancel()
 	File.open("message.csv", ios::out);
 	File << column << "\n";
 	while (search != NULL) {
-		All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;
+		All = search->Class + _T(",") + search->Name + _T(",") + search->Number + _T(",") + search->Sex + _T(",") + search->Phone + _T(",");
 		row = CT2A(All.GetString());
 		File << row << "\n";
 		search = search->next;

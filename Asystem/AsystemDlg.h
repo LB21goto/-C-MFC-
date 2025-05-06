@@ -35,17 +35,16 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public://定义变量
-	CString m_Class;
+	
 	afx_msg void OnBnClickedAddB();
 	afx_msg void OnBnClickedSearchB();
-	CString m_Name;
 	afx_msg void OnBnClickedModifyB();
 	afx_msg void OnBnClickedDeleteB();
+	CString m_Class;
+	CString m_Name;
 	CString m_Number;
 	CString m_Sex;
 	CString m_Phone;
-	CString m_Mailbox;
-	CString m_Home;
 	CListCtrl m_List;
 	afx_msg void OnBnClickedBclearall();
 	afx_msg void OnBnClickedBclearin();
