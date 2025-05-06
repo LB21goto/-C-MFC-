@@ -36,13 +36,12 @@ CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
 }
 
 void CAboutDlg::DoDataExchange(CDataExchange* pDX)
-{
+{	
 	CDialogEx::DoDataExchange(pDX);
 }
 
 BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
 END_MESSAGE_MAP()
-
 
 // CAsystemDlg 对话框
 
@@ -70,7 +69,7 @@ void CAsystemDlg::DoDataExchange(CDataExchange* pDX)//框内数据交换
 	DDX_Text(pDX, IDC_Ephone, m_Phone);
 	DDX_Text(pDX, IDC_Emailbox, m_Mailbox);
 	DDX_Text(pDX, IDC_Ehome, m_Home);
-	DDX_Control(pDX, IDC_LAll, m_List);
+	DDX_Control(pDX, IDC_LIST2, m_List);
 }
 
 BEGIN_MESSAGE_MAP(CAsystemDlg, CDialogEx)//按钮点击映射
@@ -85,7 +84,8 @@ BEGIN_MESSAGE_MAP(CAsystemDlg, CDialogEx)//按钮点击映射
 	ON_BN_CLICKED(IDC_Bclearin, &CAsystemDlg::OnBnClickedBclearin)
 	ON_BN_CLICKED(IDCANCEL, &CAsystemDlg::OnBnClickedCancel)
 	ON_EN_CHANGE(IDC_Enumber, &CAsystemDlg::OnEnChangeEnumber)
-	ON_LBN_SELCHANGE(IDC_LAll, &CAsystemDlg::OnLbnSelchangeLall)
+	/*ON_LBN_SELCHANGE(IDC_LAll, &CAsystemDlg::OnLbnSelchangeLall)*/
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST2, &CAsystemDlg::OnLvnItemchangedList2)
 END_MESSAGE_MAP()
 
 
@@ -113,7 +113,8 @@ Msg*index;//设置递增指针用于添加
 BOOL CAsystemDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-	m_List.SendMessage(LVM_SETEXTENDEDLISTVIEWSTYLE, 1, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	// 设置报表模式（必须）
+	m_List.ModifyStyle(0, LVS_REPORT);
 	// 将“关于...”菜单项添加到系统菜单中。
 
 	// IDM_ABOUTBOX 必须在系统命令范围内。
@@ -175,57 +176,83 @@ BOOL CAsystemDlg::OnInitDialog()
 
 	// 获取 Static 控件并设置字体
 	GetDlgItem(IDC_STATIC1)->SetFont(&m_Font);
-	GetDlgItem(IDC_LAll)->SetFont(&m_Font1);
+	/*GetDlgItem(IDC_LAll)->SetFont(&m_Font1);*/
 	
-
 
 	int i = 1;
 	msg->next = NULL;
 	fstream File;
-	string str;//用于保存获取的行
-	stringstream ss;//把保存的行给予字符串流
-	string item;//把字符串流分割出的字符串给予item
+	string str;      // 用于保存获取的行
+	stringstream ss; // 把保存的行给予字符串流
+	string item;     // 把字符串流分割出的字符串给予item
 	CString citem;
-	File.open("message.csv",ios::in);
-	getline(File, str);//先读文件一次把列名加入
-	citem = str.c_str();
-	m_List.AddString(citem);
-	if (getline(File, str)) {//原系统中已经保存了一些通讯录信息
-		do {
-			index = msg;
-			while (index->next != NULL) { index = index->next; }
-			Msg*node = new Msg;
-			node->next = NULL;
-			index->next = node;
-			index = index->next;
-			ss.clear();//重置字符串流
-			ss << str;
-			while (getline(ss, item, ','))//每一个新的ss信息放入一个新节点中
-			{
-				citem = item.c_str();
-				switch (i) {
-				case 1:
-					index->Class = citem; break;//每行的读入用,分隔
-				case 2:
-					index->Name = citem; break;
-				case 3:
-					index->Number = citem; break;
-				case 4:
-					index->Sex = citem; break;
-				case 5:
-					index->Phone = citem; break;
-				case 6:
-					index->Mailbox = citem; break;
-				case 7:
-					index->Home = citem; break;
-				}
-				change(&i);
-			}
-			All = index->Class + "," + index->Name + "," + index->Number + "," + index->Sex + "," + index->Phone + "," + index->Mailbox + "," + index->Home;
-			m_List.AddString(All);
-		} while (getline(File, str));
+
+	// 初始化表格
+	m_List.ModifyStyle(0, LVS_REPORT);  // 设置为报表模式
+	m_List.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);  // 网格线 + 整行选择
+
+	// 添加列
+	m_List.InsertColumn(0, _T("Class"), LVCFMT_LEFT, 80);
+	m_List.InsertColumn(1, _T("Name"), LVCFMT_LEFT, 100);
+	m_List.InsertColumn(2, _T("Number"), LVCFMT_LEFT, 80);
+	m_List.InsertColumn(3, _T("Sex"), LVCFMT_LEFT, 60);
+	m_List.InsertColumn(4, _T("Phone"), LVCFMT_LEFT, 120);
+	m_List.InsertColumn(5, _T("Mailbox"), LVCFMT_LEFT, 150);
+	m_List.InsertColumn(6, _T("Home"), LVCFMT_LEFT, 200);
+	m_List.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
+
+	// 打开CSV文件
+	File.open("message.csv", ios::in);
+	if (!File.is_open()) {
+		AfxMessageBox(_T("无法打开文件！"));
+		return FALSE;
 	}
-	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
+	// 跳过标题行（第一行）
+	getline(File, str);
+	int nRow = 0; // 表格行索引
+
+	// 读取数据行
+	while (getline(File, str)) {
+		// 创建新节点并添加到链表
+		index = msg;
+		while (index->next != NULL) {
+			index = index->next;
+		}
+		Msg* node = new Msg;
+		node->next = NULL;
+		index->next = node;
+		index = index->next;
+
+		// 解析CSV行数据
+		ss.clear();
+		ss << str;
+		i = 1; // 重置列计数器
+
+		// 插入新行到表格
+		int nItem = m_List.InsertItem(nRow, _T("")); // 先插入空行
+		while (getline(ss, item, ',')) {
+			citem = item.c_str();
+
+			// 填充链表节点
+			switch (i) {
+			case 1: index->Class = citem; break;
+			case 2: index->Name = citem; break;
+			case 3: index->Number = citem; break;
+			case 4: index->Sex = citem; break;
+			case 5: index->Phone = citem; break;
+			case 6: index->Mailbox = citem; break;
+			case 7: index->Home = citem; break;
+			}
+
+			// 填充表格数据（列索引是i-1）
+			m_List.SetItemText(nItem, i - 1, citem);
+			change(&i); // 你的列计数器递增函数
+		}
+		nRow++;
+	}
+
+	File.close();
+	return TRUE;
 }
 
 void CAsystemDlg::OnSysCommand(UINT nID, LPARAM lParam)
@@ -300,8 +327,17 @@ void CAsystemDlg::OnBnClickedAddB()//添加功能***
 		index->Phone = m_Phone;
 		index->Mailbox = m_Mailbox;
 		index->Home = m_Home;
-		All = m_Class + "," + m_Name + ","  + m_Number + "," + m_Sex + "," + m_Phone + "," + m_Mailbox + "," + m_Home;
-		m_List.AddString(All);//在listbox控件中添加新信息
+		CString All = m_Class + _T(",") + m_Name + _T(",") + m_Number + _T(",") + m_Sex + _T(",") + m_Phone + _T(",") + m_Mailbox + _T(",") + m_Home;
+
+		// 在 CListCtrl 中添加新行
+		int nItem = m_List.InsertItem(m_List.GetItemCount(), m_Class);
+		// 设置其他列的值
+		m_List.SetItemText(nItem, 1, m_Name);
+		m_List.SetItemText(nItem, 2, m_Number);
+		m_List.SetItemText(nItem, 3, m_Sex);
+		m_List.SetItemText(nItem, 4, m_Phone);
+		m_List.SetItemText(nItem, 5, m_Mailbox);
+		m_List.SetItemText(nItem, 6, m_Home);
 		UpdateData(FALSE);//显示数据
 		MessageBox(_T("添加成功"));
 	}
@@ -311,15 +347,35 @@ void CAsystemDlg::OnBnClickedAddB()//添加功能***
 
 void CAsystemDlg::OnBnClickedSearchB()//查找功能***
 {
-	// TODO: 在此添加控件通知处理程序代码
-	UpdateData(TRUE);
-	Msg*search = msg->next;
-	if (m_Number!=L""&&search!=NULL)
+	//TODO: 在此添加控件通知处理程序代码
+	UpdateData(TRUE); // 将控件中的数据更新到成员变量
+
+	Msg* search = msg->next; // 从链表的第一个节点开始搜索
+	if (m_Number != L"" && search != NULL) // 确保学号不为空且链表不为空
 	{
-		while (search!=NULL&&m_Number != search->Number&&search->next != NULL){search = search->next;}
-		if ((m_Name == search->Name||m_Name=="")&&m_Number==search->Number) {//查找时必须输入学号，姓名可不输入，若输入姓名需要输入正确的姓名，否则查找不成功
-			All = search->Class + "," + search->Name + ","  + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;
-			m_List.FindString(-1, All);
+		while (search != NULL && m_Number != search->Number) // 根据学号查找
+		{
+			search = search->next;
+		}
+
+		if (search != NULL && (m_Name == L"" || m_Name == search->Name)) // 如果找到匹配的学号，并且姓名匹配（或未输入姓名）
+		{
+			// 构造要显示的字符串
+			CString All = search->Class + _T(",") + search->Name + _T(",") + search->Number + _T(",") + search->Sex + _T(",") + search->Phone + _T(",") + search->Mailbox + _T(",") + search->Home;
+
+			// 清空 CListCtrl
+			m_List.DeleteAllItems();
+
+			// 在 CListCtrl 中插入新行
+			int nItem = m_List.InsertItem(m_List.GetItemCount(), search->Class); // 插入新行，第一列显示 Class
+			m_List.SetItemText(nItem, 1, search->Name);
+			m_List.SetItemText(nItem, 2, search->Number);
+			m_List.SetItemText(nItem, 3, search->Sex);
+			m_List.SetItemText(nItem, 4, search->Phone);
+			m_List.SetItemText(nItem, 5, search->Mailbox);
+			m_List.SetItemText(nItem, 6, search->Home);
+
+			// 更新成员变量
 			m_Class = search->Class;
 			m_Name = search->Name;
 			m_Number = search->Number;
@@ -327,92 +383,97 @@ void CAsystemDlg::OnBnClickedSearchB()//查找功能***
 			m_Phone = search->Phone;
 			m_Mailbox = search->Mailbox;
 			m_Home = search->Home;
+
+			MessageBox(_T("查找成功"));
+		}
+		else
+		{
+			MessageBox(_T("未找到匹配项"));
 		}
 	}
-	MessageBox(L"查找成功");
-	UpdateData(FALSE);
+	UpdateData(FALSE); // 将成员变量中的数据更新到控件
 }
 
 
 void CAsystemDlg::OnBnClickedModifyB()//修改功能***
 {
 	// TODO: 在此添加控件通知处理程序代码
-	UpdateData(TRUE);
-	Msg*search = msg->next;
-	if (search != NULL&&m_Number!=""&&m_Name!="")//修改必须输入学号姓名
-	{
-		while (m_Number!=search->Number&&search->next != NULL) { search = search->next; }
-		if ( m_Number == search->Number) {
-			All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;
-			int column=m_List.FindString(-1, All);
-			search->Class = m_Class;
-			search->Name = m_Name;
-			search->Number=m_Number;
-			search->Sex=m_Sex;
-			search->Phone=m_Phone;
-			search->Mailbox=m_Mailbox;
-			search->Home=m_Home;
-			m_List.DeleteString(column);
-			All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;
-			m_List.AddString(All);
-			MessageBox(L"修改成功");
-		}
-	}
+	//UpdateData(TRUE);
+	//Msg*search = msg->next;
+	//if (search != NULL&&m_Number!=""&&m_Name!="")//修改必须输入学号姓名
+	//{
+	//	while (m_Number!=search->Number&&search->next != NULL) { search = search->next; }
+	//	if ( m_Number == search->Number) {
+	//		All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;
+	//		int column=m_List.FindString(-1, All);
+	//		search->Class = m_Class;
+	//		search->Name = m_Name;
+	//		search->Number=m_Number;
+	//		search->Sex=m_Sex;
+	//		search->Phone=m_Phone;
+	//		search->Mailbox=m_Mailbox;
+	//		search->Home=m_Home;
+	//		m_List.DeleteString(column);
+	//		All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;
+	//		m_List.AddString(All);
+	//		MessageBox(L"修改成功");
+	//	}
+	//}
 }
 
 
 void CAsystemDlg::OnBnClickedDeleteB()//删除功能***
 {
 	// TODO: 在此添加控件通知处理程序代码
-	Msg*search = msg->next;//指向要删除的记录的当前节点
-	Msg*pri = msg;//前指针指向要删除的记录的前一个节点
-	CString res;//获取目标行的数据
-	UpdateData(TRUE);
-	int list_sel = m_List.GetSelCount();
-	if (list_sel > 0&&search!=NULL) {
-		int *p = new int[list_sel];
-		m_List.GetSelItems(list_sel, p);//获取要删除的行号
-		for (int i = list_sel - 1; i >= 0; i--) {
-			//由于可多行删除，故每次循环需要重置pri和search指针的位置
-			pri = msg;
-			search = msg->next;
-			m_List.GetText(p[i], res);
-			All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;//初始化All
-			while (All!=res&& search->next != NULL) {
-				pri = pri->next;
-				search = search->next;
-				All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;
-			}
-			if (All == res)//找到要删除的节点
-			{
-				pri->next = search->next;
-				delete search;
-			}
-			m_List.DeleteString(p[i]);
-		}
-	}
-	else if(search != NULL&&m_Number!="") {
-		while (m_Number != search->Number&&search->next != NULL) 
-		{
-			search = search->next;
-			pri = pri->next;
-		}
-		if (m_Number == search->Number)//找到要删除的节点
-		{
-			All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;
-			int column=m_List.FindString(-1, All);
-			pri->next = search->next;
-			delete search;
-			m_List.DeleteString(column);
-		}
-	}
+	//Msg*search = msg->next;//指向要删除的记录的当前节点
+	//Msg*pri = msg;//前指针指向要删除的记录的前一个节点
+	//CString res;//获取目标行的数据
+	//UpdateData(TRUE);
+	//int list_sel = m_List.GetSelCount();
+	//if (list_sel > 0&&search!=NULL) {
+	//	int *p = new int[list_sel];
+	//	m_List.GetSelItems(list_sel, p);//获取要删除的行号
+	//	for (int i = list_sel - 1; i >= 0; i--) {
+	//		//由于可多行删除，故每次循环需要重置pri和search指针的位置
+	//		pri = msg;
+	//		search = msg->next;
+	//		m_List.GetText(p[i], res);
+	//		All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;//初始化All
+	//		while (All!=res&& search->next != NULL) {
+	//			pri = pri->next;
+	//			search = search->next;
+	//			All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;
+	//		}
+	//		if (All == res)//找到要删除的节点
+	//		{
+	//			pri->next = search->next;
+	//			delete search;
+	//		}
+	//		m_List.DeleteString(p[i]);
+	//	}
+	//}
+	//else if(search != NULL&&m_Number!="") {
+	//	while (m_Number != search->Number&&search->next != NULL) 
+	//	{
+	//		search = search->next;
+	//		pri = pri->next;
+	//	}
+	//	if (m_Number == search->Number)//找到要删除的节点
+	//	{
+	//		All = search->Class + "," + search->Name + "," + search->Number + "," + search->Sex + "," + search->Phone + "," + search->Mailbox + "," + search->Home;
+	//		int column=m_List.FindString(-1, All);
+	//		pri->next = search->next;
+	//		delete search;
+	//		m_List.DeleteString(column);
+	//	}
+	//}
 }
 
 
 void CAsystemDlg::OnBnClickedBclearall()
 {
 	// TODO: 在此添加控件通知处理程序代码
-	m_List.ResetContent();
+	/*m_List.ResetContent();
 	Msg*search = msg->next;
 	Msg*p;
 	msg->next = NULL;
@@ -420,7 +481,7 @@ void CAsystemDlg::OnBnClickedBclearall()
 		p = search;
 		search = search->next;
 		delete p;
-	}
+	}*/
 }
 
 
@@ -477,3 +538,11 @@ void CAsystemDlg::OnLbnSelchangeLall()
 
 
 
+
+
+void CAsystemDlg::OnLvnItemchangedList2(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	// TODO: 在此添加控件通知处理程序代码
+	*pResult = 0;
+}

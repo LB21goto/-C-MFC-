@@ -46,7 +46,7 @@ public://定义变量
 	CString m_Phone;
 	CString m_Mailbox;
 	CString m_Home;
-	CListBox m_List;
+	CListCtrl m_List;
 	afx_msg void OnBnClickedBclearall();
 	afx_msg void OnBnClickedBclearin();
 	afx_msg void OnBnClickedCancel();
@@ -54,4 +54,5 @@ public://定义变量
 	afx_msg void OnLbnSelchangeLall();
 	CFont m_Font;//改变字体大小主标题
 	CFont m_Font1;//改变字体大小显示框内
+	afx_msg void OnLvnItemchangedList2(NMHDR* pNMHDR, LRESULT* pResult);
 };
