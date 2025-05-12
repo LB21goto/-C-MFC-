@@ -7,6 +7,21 @@
 #include <string>
 #include <sstream>
 #include <afx.h>
+
+// 在文件开头添加结构体定义
+struct Msg
+{
+	CString Class;
+	CString Name;
+	CString ID;
+	CString Sex;
+	CString Phone;
+	Msg* next;
+};
+// 声明外部变量
+extern Msg* msg;//此为头结点，不可能不声明
+extern Msg* tail;
+
 // CAsystemDlg 对话框
 class CAsystemDlg : public CDialogEx
 {
@@ -40,21 +55,27 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	DECLARE_MESSAGE_MAP()
-public: // 定义变量
+public: 
+
+	// 定义变量
 	afx_msg void OnBnClickedAddB();
 	afx_msg void OnBnClickedSearchB();
 	afx_msg void OnBnClickedModifyB();
 	afx_msg void OnBnClickedDeleteB();
-	CString m_Class;
+	CString m_Class;   
 	CString m_Name;
-	CString m_Number;
+	CString m_ID;
 	CString m_Sex;
 	CString m_Phone;
 	CListCtrl m_List;
 	afx_msg void OnBnClickedBclearall();
 	afx_msg void OnBnClickedBclearin();
 	afx_msg void OnBnClickedCancel();
-	afx_msg void OnEnChangeEnumber();
+	afx_msg void OnEnChangeEID();
 	afx_msg void OnLbnSelchangeLall();
 	afx_msg void OnLvnItemchangedList2(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnEnChangeEnumber();
+	afx_msg void OnBnClickedButton1();
 };
+// 设置结构体数组用于保存数据
+

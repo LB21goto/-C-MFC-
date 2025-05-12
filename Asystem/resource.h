@@ -14,6 +14,7 @@
 #define IDC_Eclass                      1005
 #define IDC_Ename                       1006
 #define IDC_Enumber                     1008
+#define IDC_EID                         1008
 #define IDC_Esex                        1009
 #define IDC_Ephone                      1010
 #define IDC_Emailbox                    1011
@@ -24,6 +25,8 @@
 #define IDC_Bclearin                    1024
 #define IDC_STATIC1                     1027
 #define IDC_LIST2                       1030
+#define IDC_BUTTON1                     1031
+#define IDC_LIST3                       1033
 
 // Next default values for new objects
 // 
@@ -31,7 +34,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        130
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1031
+#define _APS_NEXT_CONTROL_VALUE         1034
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -47,7 +47,7 @@ END_MESSAGE_MAP()
 // CAsystemDlg 对话框
 
 CAsystemDlg::CAsystemDlg(CWnd *pParent /*=nullptr*/)
-	: CDialogEx(IDD_ASYSTEM_DIALOG, pParent), m_Name(_T("")), m_Number(_T("")), m_Sex(_T("")), m_Phone(_T(""))
+	: CDialogEx(IDD_ASYSTEM_DIALOG, pParent), m_Name(_T("")), m_ID(_T("")), m_Sex(_T("")), m_Phone(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -57,7 +57,7 @@ void CAsystemDlg::DoDataExchange(CDataExchange *pDX) // 框内数据交换
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_Eclass, m_Class);
 	DDX_Text(pDX, IDC_Ename, m_Name);
-	DDX_Text(pDX, IDC_Enumber, m_Number);
+	DDX_Text(pDX, IDC_EID, m_ID);
 	DDX_Text(pDX, IDC_Esex, m_Sex);
 	DDX_Text(pDX, IDC_Ephone, m_Phone);
 	DDX_Control(pDX, IDC_LIST2, m_List);
@@ -74,23 +74,15 @@ ON_BN_CLICKED(IDC_Delete_B, &CAsystemDlg::OnBnClickedDeleteB)
 ON_BN_CLICKED(IDC_Bclearall, &CAsystemDlg::OnBnClickedBclearall)
 ON_BN_CLICKED(IDC_Bclearin, &CAsystemDlg::OnBnClickedBclearin)
 ON_BN_CLICKED(IDCANCEL, &CAsystemDlg::OnBnClickedCancel)
-/*ON_EN_CHANGE(IDC_Enumber, &CAsystemDlg::OnEnChangeEnumber)*/
-/*ON_LBN_SELCHANGE(IDC_LAll, &CAsystemDlg::OnLbnSelchangeLall)*/
 ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST2, &CAsystemDlg::OnLvnItemchangedList2)
 ON_WM_MOUSEMOVE() // 添加鼠标移动消息处理
+ON_EN_CHANGE(IDC_Enumber, &CAsystemDlg::OnEnChangeEnumber)
+ON_BN_CLICKED(IDC_BUTTON1, &CAsystemDlg::OnBnClickedButton1)
 END_MESSAGE_MAP()
 
 // CAsystemDlg 消息处理程序
-// 设置结构体数组用于保存数据
-struct Msg
-{
-	CString Class;
-	CString Name;
-	CString Number;
-	CString Sex;
-	CString Phone;
-	Msg *next;
-} *msg = new Msg;
+Msg *msg = new Msg;	 // 此为头结点，不可能不创
+Msg *tail = new Msg; // 此为尾结点，不可能不创
 
 void change(int *i)
 {
@@ -108,8 +100,11 @@ BOOL CAsystemDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 	// 设置报表模式（必须）
 	m_List.ModifyStyle(0, LVS_REPORT);
-
-	// 创建工具提示控件
+	msg = new Msg; // 创建头结点
+	msg->next = NULL;
+	tail = new Msg; // 创建尾结点
+	tail->next = NULL;
+	// 创建工具提示控件（鼠标悬停动作
 	m_ToolTip.Create(this, TTS_ALWAYSTIP);
 	m_ToolTip.SetDelayTime(TTDT_AUTOPOP, 5000); // 显示时间
 	m_ToolTip.SetDelayTime(TTDT_INITIAL, 500);	// 初始延迟
@@ -117,12 +112,11 @@ BOOL CAsystemDlg::OnInitDialog()
 
 	// 为每个控件添加提示文本
 	m_ToolTip.AddTool(GetDlgItem(IDC_Add_B), _T("添加新的联系人"));
-	m_ToolTip.AddTool(GetDlgItem(IDC_Search_B), _T("指定学号搜索已有联系人"));
+	m_ToolTip.AddTool(GetDlgItem(IDC_Search_B), _T("搜索已有联系人"));
 	m_ToolTip.AddTool(GetDlgItem(IDC_Modify_B), _T("修改指定学号联系人"));
 	m_ToolTip.AddTool(GetDlgItem(IDC_Delete_B), _T("删除指定学号联系人"));
 	m_ToolTip.AddTool(GetDlgItem(IDC_Bclearall), _T("清空所有联系人"));
 	m_ToolTip.AddTool(GetDlgItem(IDC_Bclearin), _T("清空输入框"));
-
 	m_ToolTip.Activate(TRUE);
 
 	// 将"关于..."菜单项添加到系统菜单中。
@@ -151,6 +145,7 @@ BOOL CAsystemDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE); // 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+
 	// 字体大小
 	// 创建新字体(此为主标题
 	m_Font.CreateFont(
@@ -167,35 +162,9 @@ BOOL CAsystemDlg::OnInitDialog()
 		CLIP_DEFAULT_PRECIS,
 		DEFAULT_QUALITY,
 		DEFAULT_PITCH | FF_SWISS,
-		_T("Arial")); // 字体名称
-	// 此为表格内字体
-	m_Font1.CreateFont(
-		24,			  // 字体高度
-		11,			  // 字体宽度
-		0,			  // 倾斜角度
-		0,			  // 方向角度
-		FW_NORMAL,	  // 字体粗细
-		FALSE,		  // 是否斜体
-		FALSE,		  // 是否下划线
-		0,			  // 是否删除线
-		ANSI_CHARSET, // 字符集
-		OUT_DEFAULT_PRECIS,
-		CLIP_DEFAULT_PRECIS,
-		DEFAULT_QUALITY,
-		DEFAULT_PITCH | FF_SWISS,
-		_T("宋体")); // 字体名称
-
+		_T("Arial"));
 	// 获取 Static 控件并设置字体（list2默认大小合适，暂不使用
 	GetDlgItem(IDC_STATIC1)->SetFont(&m_Font);
-	/*GetDlgItem(IDC_LIST2)->SetFont(&m_Font1);*/
-
-	int i = 1;
-	msg->next = NULL;
-	fstream File;
-	string str;		 // 用于保存获取的行
-	stringstream ss; // 把保存的行给予字符串流
-	string item;	 // 把字符串流分割出的字符串给予item
-	CString citem;
 
 	// 初始化表格
 	m_List.ModifyStyle(0, LVS_REPORT);								  // 设置为报表模式
@@ -210,69 +179,55 @@ BOOL CAsystemDlg::OnInitDialog()
 	m_List.InsertColumn(4, _T("Phone"), LVCFMT_LEFT, 140);
 	m_List.SetExtendedStyle(LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT);
 
-	// 打开CSV文件
+	// 从文件加载数据
+	fstream File;
 	File.open("message.csv", ios::in);
 	if (!File.is_open())
 	{
-		AfxMessageBox(_T("无法打开文件！"));
-		return FALSE;
+		// 如果文件不存在，创建新文件
+		File.open("message.csv", ios::out);
+		if (File.is_open())
+		{
+			File << "Class,Name,ID,Sex,Phone\n";
+			File.close();
+		}
+		return TRUE;
 	}
-	// 跳过标题行（第一行）
-	getline(File, str);
-	int nRow = 0; // 表格行索引
 
-	// 读取数据行
+	string str;
+	getline(File, str); // 跳过标题行
+
+	Msg *tail = msg; // 用于追加节点
 	while (getline(File, str))
 	{
-		// 创建新节点并添加到链表
-		index = msg;
-		while (index->next != NULL)
-		{
-			index = index->next;
-		}
-		Msg *node = new Msg;
-		node->next = NULL;
-		index->next = node;
-		index = index->next;
+		stringstream ss(str);
+		string item;
+		Msg *newNode = new Msg;
+		newNode->next = NULL;
 
-		// 解析CSV行数据
-		ss.clear();
-		ss << str;
-		i = 1; // 重置列计数器
+		// 读取每个字段
+		if (getline(ss, item, ','))
+			newNode->Class = CString(item.c_str());
+		if (getline(ss, item, ','))
+			newNode->Name = CString(item.c_str());
+		if (getline(ss, item, ','))
+			newNode->ID = CString(item.c_str());
+		if (getline(ss, item, ','))
+			newNode->Sex = CString(item.c_str());
+		if (getline(ss, item, ','))
+			newNode->Phone = CString(item.c_str());
 
-		// 插入新行到表格
-		int nItem = m_List.InsertItem(nRow, _T("")); // 先插入空行
-		while (getline(ss, item, ','))
-		{
-			citem = item.c_str();
+		// 添加到链表
+		tail->next = newNode;
+		tail = newNode;
 
-			// 填充链表节点
-			switch (i)
-			{
-			case 1:
-				index->Class = citem;
-				break;
-			case 2:
-				index->Name = citem;
-				break;
-			case 3:
-				index->Number = citem;
-				break;
-			case 4:
-				index->Sex = citem;
-				break;
-			case 5:
-				index->Phone = citem;
-				break;
-			}
-
-			// 填充表格数据（列索引是i-1）
-			m_List.SetItemText(nItem, i - 1, citem);
-			change(&i); // 你的列计数器递增函数
-		}
-		nRow++;
+		// 添加到表格显示
+		int nItem = m_List.InsertItem(m_List.GetItemCount(), newNode->Class);
+		m_List.SetItemText(nItem, 1, newNode->Name);
+		m_List.SetItemText(nItem, 2, newNode->ID);
+		m_List.SetItemText(nItem, 3, newNode->Sex);
+		m_List.SetItemText(nItem, 4, newNode->Phone);
 	}
-
 	File.close();
 	return TRUE;
 }
@@ -328,7 +283,7 @@ HCURSOR CAsystemDlg::OnQueryDragIcon()
 
 void CAsystemDlg::OnBnClickedAddB() // 添加功能***
 {									// TODO: 在此添加控件通知处理程序代码
-	// 重置index
+	// index
 	index = msg;
 	while (index->next != NULL)
 	{
@@ -336,15 +291,15 @@ void CAsystemDlg::OnBnClickedAddB() // 添加功能***
 	}
 	UpdateData(TRUE); // 传入数据
 	Msg *search = msg->next;
-	if (m_Name != "" && m_Number != "")
-	{ // 必须输入学号与姓名
+	if (m_Name != "" && m_ID != "")
+	{ // 输入学号与姓名
 		if (search != NULL)
 		{
-			while (search != NULL && m_Number != search->Number && search->next != NULL)
+			while (search != NULL && m_ID != search->ID && search->next != NULL)
 			{
 				search = search->next;
 			}
-			if (m_Number == search->Number)
+			if (m_ID == search->ID)
 				return; // 出现重复学号不予处理
 		}
 		Msg *node = new Msg; // 利用链表存储信息
@@ -353,16 +308,16 @@ void CAsystemDlg::OnBnClickedAddB() // 添加功能***
 		index = index->next;
 		index->Class = m_Class;
 		index->Name = m_Name;
-		index->Number = m_Number;
+		index->ID = m_ID;
 		index->Sex = m_Sex;
 		index->Phone = m_Phone;
-		CString All = m_Class + _T(",") + m_Name + _T(",") + m_Number + _T(",") + m_Sex + _T(",") + m_Phone + _T(",");
+		CString All = m_Class + _T(",") + m_Name + _T(",") + m_ID + _T(",") + m_Sex + _T(",") + m_Phone + _T(",");
 
 		// 在 CListCtrl 中添加新行
 		int nItem = m_List.InsertItem(m_List.GetItemCount(), m_Class);
 		// 设置其他列的值
 		m_List.SetItemText(nItem, 1, m_Name);
-		m_List.SetItemText(nItem, 2, m_Number);
+		m_List.SetItemText(nItem, 2, m_ID);
 		m_List.SetItemText(nItem, 3, m_Sex);
 		m_List.SetItemText(nItem, 4, m_Phone);
 		UpdateData(FALSE); // 显示数据
@@ -372,66 +327,92 @@ void CAsystemDlg::OnBnClickedAddB() // 添加功能***
 
 void CAsystemDlg::OnBnClickedSearchB() // 查找功能***
 {
-	// TODO: 在此添加控件通知处理程序代码
 	UpdateData(TRUE); // 将控件中的数据更新到成员变量
 
-	Msg *search = msg->next;			   // 从链表的第一个节点开始搜索
-	if (m_Number != L"" && search != NULL) // 确保学号不为空且链表不为空
-	{
-		while (search != NULL && m_Number != search->Number) // 根据学号查找
-		{
-			search = search->next;
-		}
-		if (search != NULL && (m_Name == L"" || m_Name == search->Name)) // 如果找到匹配的学号，并且姓名匹配（或未输入姓名）
-		{
-			// 构造要显示的字符串
-			CString All = search->Class + _T(",") + search->Name + _T(",") + search->Number + _T(",") + search->Sex + _T(",") + search->Phone + _T(",");
+	Msg *search = msg->next; // 从链表的第一个节点开始搜索
+	bool found = false;
 
-			// 清空 CListCtrl
-			m_List.DeleteAllItems();
-			// 在 CListCtrl 中插入新行
-			int nItem = m_List.InsertItem(m_List.GetItemCount(), search->Class); // 插入新行，第一列显示 Class
+	// 清空 CListCtrl，准备显示搜索结果
+	m_List.DeleteAllItems();
+	int nRow = 0;
+
+	// 遍历链表搜索匹配项
+	while (search != NULL)
+	{
+		bool match = false;
+		// 按学号搜索
+		if (m_ID != L"" && m_ID == search->ID)
+		{
+			match = true;
+		}
+		// 按姓名搜索
+		else if (m_Name != L"" && m_Name == search->Name)
+		{
+			match = true;
+		}
+		// 按电话搜索
+		else if (m_Phone != L"" && m_Phone == search->Phone)
+		{
+			match = true;
+		}
+
+		if (match)
+		{
+			// 在 CListCtrl 中插入匹配的行
+			int nItem = m_List.InsertItem(nRow, search->Class);
 			m_List.SetItemText(nItem, 1, search->Name);
-			m_List.SetItemText(nItem, 2, search->Number);
+			m_List.SetItemText(nItem, 2, search->ID);
 			m_List.SetItemText(nItem, 3, search->Sex);
 			m_List.SetItemText(nItem, 4, search->Phone);
-
-			// 更新成员变量
-			m_Class = search->Class;
-			m_Name = search->Name;
-			m_Number = search->Number;
-			m_Sex = search->Sex;
-			m_Phone = search->Phone;
-
-			MessageBox(_T("查找成功"));
+			nRow++;
+			found = true;
 		}
-		else
+		search = search->next;
+	}
+
+	if (found)
+	{
+		MessageBox(_T("查找成功"));
+	}
+	else
+	{
+		MessageBox(_T("未找到匹配项"));
+		// 恢复显示所有数据
+		search = msg->next;
+		nRow = 0;
+		while (search != NULL)
 		{
-			MessageBox(_T("未找到匹配项"));
+			int nItem = m_List.InsertItem(nRow, search->Class);
+			m_List.SetItemText(nItem, 1, search->Name);
+			m_List.SetItemText(nItem, 2, search->ID);
+			m_List.SetItemText(nItem, 3, search->Sex);
+			m_List.SetItemText(nItem, 4, search->Phone);
+			nRow++;
+			search = search->next;
 		}
 	}
-	UpdateData(FALSE); // 将成员变量中的数据更新到控件
+	UpdateData(FALSE);
 }
 
-void CAsystemDlg::OnBnClickedModifyB() // 修改功能***
+void CAsystemDlg::OnBnClickedModifyB() // 修改功能
 {
 	// TODO: 在此添加控件通知处理程序代码
 	UpdateData(TRUE);		 // 从控件中获取数据
 	Msg *search = msg->next; // 假设 msg 是链表的头节点
 
-	if (search != NULL && m_Number != "") // 只需要输入学号即可进行修改
+	if (search != NULL && m_ID != "") // 只需要输入学号即可进行修改
 	{
-		while (m_Number != search->Number && search->next != NULL)
+		while (m_ID != search->ID && search->next != NULL)
 		{
 			search = search->next;
 		}
 
-		if (m_Number == search->Number) // 找到匹配的学号
+		if (m_ID == search->ID) // 找到匹配的学号
 		{
 			// 更新链表中的数据
 			search->Class = m_Class;
 			search->Name = m_Name;
-			search->Number = m_Number;
+			search->ID = m_ID;
 			search->Sex = m_Sex;
 			search->Phone = m_Phone;
 
@@ -439,9 +420,9 @@ void CAsystemDlg::OnBnClickedModifyB() // 修改功能***
 			int nItem = -1;
 			for (int i = 0; i < m_List.GetItemCount(); i++) // 遍历 CListCtrl 中的所有项
 			{
-				CString itemNumber;
-				m_List.GetItemText(i, 2);	// 假设学号在第3列（索引2）
-				if (itemNumber == m_Number) // 找到匹配的学号
+				CString itemID;
+				m_List.GetItemText(i, 2); // 假设学号在第3列（索引2）
+				if (itemID == m_ID)		  // 找到匹配的学号
 				{
 					nItem = i;
 					break;
@@ -450,11 +431,11 @@ void CAsystemDlg::OnBnClickedModifyB() // 修改功能***
 			if (nItem != -1) // 如果找到了匹配的项
 			{
 				// 更新 CListCtrl 中的每一列
-				m_List.SetItemText(nItem, 0, m_Class);	// 假设班级在第1列（索引0）
-				m_List.SetItemText(nItem, 1, m_Name);	// 假设姓名在第2列（索引1）
-				m_List.SetItemText(nItem, 2, m_Number); // 假设学号在第3列（索引2）
-				m_List.SetItemText(nItem, 3, m_Sex);	// 假设性别在第4列（索引3）
-				m_List.SetItemText(nItem, 4, m_Phone);	// 假设电话在第5列（索引4）
+				m_List.SetItemText(nItem, 0, m_Class); // 假设班级在第1列（索引0）
+				m_List.SetItemText(nItem, 1, m_Name);  // 假设姓名在第2列（索引1）
+				m_List.SetItemText(nItem, 2, m_ID);	   // 假设学号在第3列（索引2）
+				m_List.SetItemText(nItem, 3, m_Sex);   // 假设性别在第4列（索引3）
+				m_List.SetItemText(nItem, 4, m_Phone); // 假设电话在第5列（索引4）
 			}
 			MessageBox(L"修改成功");
 		}
@@ -470,7 +451,7 @@ void CAsystemDlg::OnBnClickedModifyB() // 修改功能***
 	UpdateData(FALSE); // 更新数据
 }
 
-void CAsystemDlg::OnBnClickedDeleteB() // 删除功能***
+void CAsystemDlg::OnBnClickedDeleteB() // 删除功能
 {
 	// TODO: 在此添加控件通知处理程序代码
 	// 在链表中查找对应的节点
@@ -480,7 +461,7 @@ void CAsystemDlg::OnBnClickedDeleteB() // 删除功能***
 
 	while (search != NULL)
 	{
-		if (search->Number == m_Number)
+		if (search->ID == m_ID)
 		{
 			// 找到对应的节点，删除链表中的节点
 			pri->next = search->next;
@@ -495,14 +476,15 @@ void CAsystemDlg::OnBnClickedDeleteB() // 删除功能***
 	int itemCount = m_List.GetItemCount();
 	for (int i = 0; i < itemCount; ++i)
 	{
-		CString itemNumber = m_List.GetItemText(i, 2); // 假设第一列存储学号
-		if (itemNumber == m_Number)
+		CString itemID = m_List.GetItemText(i, 2); // 假设第一列存储学号
+		if (itemID == m_ID)
 		{
 			// 找到对应的项，删除列表控件中的项
 			m_List.DeleteItem(i);
 			break;
 		}
 	}
+	MessageBox(L"删除完毕");
 	UpdateData(FALSE);
 }
 
@@ -528,7 +510,7 @@ void CAsystemDlg::OnBnClickedBclearin()
 	// TODO: 在此添加控件通知处理程序代码
 	m_Class = L"";
 	m_Name = L"";
-	m_Number = L"";
+	m_ID = L"";
 	m_Sex = L"";
 	m_Phone = L"";
 	UpdateData(FALSE);
@@ -536,26 +518,36 @@ void CAsystemDlg::OnBnClickedBclearin()
 
 void CAsystemDlg::OnBnClickedCancel()
 {
-	// TODO: 在此添加控件通知处理程序代码
 	fstream File;
-	Msg *search = msg->next;
-	string column("Class,Name,ID,Sex,Phone");
-	string row;
 	File.open("message.csv", ios::out);
-	File << column << "\n";
+	// 写入表头
+	File << "Class,Name,ID,Sex,Phone\n";
+
+	// 从第一个有效节点开始保存
+	Msg *search = msg->next;
 	while (search != NULL)
 	{
-		All = search->Class + _T(",") + search->Name + _T(",") + search->Number + _T(",") + search->Sex + _T(",") + search->Phone + _T(",");
-		row = CT2A(All.GetString());
-		File << row << "\n";
-		search = search->next;
+		CStringA strClass(search->Class);
+		CStringA strName(search->Name);
+		CStringA strID(search->ID);
+		CStringA strSex(search->Sex);
+		CStringA strPhone(search->Phone);
+
+		// 写入
+		File << strClass.GetString() << ","
+			 << strName.GetString() << ","
+			 << strID.GetString() << ","
+			 << strSex.GetString() << ","
+			 << strPhone.GetString() << "\n";
+
+		search = search->next; // 往复循环
 	}
 	File.close();
 	MessageBox(L"通讯录操作已保存");
 	CDialogEx::OnCancel();
 }
 
-void CAsystemDlg::OnEnChangeEnumber()
+void CAsystemDlg::OnEnChangeEID()
 {
 	// TODO:  如果该控件是 RICHEDIT 控件，它将不
 	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
@@ -596,6 +588,43 @@ BOOL CAsystemDlg::PreTranslateMessage(MSG *pMsg)
 {
 	if (m_ToolTip.GetSafeHwnd())
 		m_ToolTip.RelayEvent(pMsg);
-
 	return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+void CAsystemDlg::OnEnChangeEnumber()
+{
+	// TODO:  如果该控件是 RICHEDIT 控件，它将不
+	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
+	// 函数并调用 CRichEditCtrl().SetEventMask()，
+	// 同时将 ENM_CHANGE 标志"或"运算到掩码中。
+
+	// TODO:  在此添加控件通知处理程序代码
+}
+
+void CAsystemDlg::OnBnClickedButton1() // reset功能
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(TRUE);
+	// 清空表格所有内容
+	m_List.DeleteAllItems();
+
+	// 从链表中重新读取数据
+	Msg *current = msg->next;
+	int nRow = 0;
+
+	// 重新填充表格
+	while (current != NULL)
+	{
+		// 插入新行并设置第一列
+		int nItem = m_List.InsertItem(nRow, current->Class);
+		// 设置其他列的值
+		m_List.SetItemText(nItem, 1, current->Name);
+		m_List.SetItemText(nItem, 2, current->ID);
+		m_List.SetItemText(nItem, 3, current->Sex);
+		m_List.SetItemText(nItem, 4, current->Phone);
+
+		current = current->next;
+		nRow++;
+	}
+	UpdateData(FALSE);
 }
