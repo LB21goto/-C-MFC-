@@ -2,7 +2,7 @@
 基于C++MFC实现的小型通讯录
 直接下载下来在VS里就可以使用了（sln文件），前提是你已经安装了VS的MFC控件
 
-具体图文介绍在这里：
+具体图文介绍在这里：https://blog.csdn.net/Sexycake/article/details/153475501?spm=1001.2014.3001.5501
 
 一、实验要求
 
